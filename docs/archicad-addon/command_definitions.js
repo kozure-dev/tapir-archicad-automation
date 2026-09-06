@@ -49,13 +49,13 @@ var gCommands = [{
             },{
                 "name": "GetPointFromUser",
                 "version": "1.5.9",
-                "description": "Asks the designer to click a point in the current window and returns it; the call waits for the click and fails when the input is cancelled.",
+                "description": "Asks the designer to click a point in the current window and returns it. Archicad waits for the click or for Escape, and every other JSON command queues behind this one until then; the call fails when the input is cancelled.",
                 "inputScheme": {
         "type": "object",
         "properties": {
             "prompt": {
                 "type": "string",
-                "description": "Shown in the control box while Archicad waits for the click."
+                "description": "Shown in the control box while Archicad waits for the click. Single-byte text: the box takes a char field. Archicad's main thread waits for the click or for Escape, and every other JSON command queues behind this one until then."
             }
         },
         "additionalProperties": false,

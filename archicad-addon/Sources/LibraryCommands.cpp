@@ -332,6 +332,7 @@ GS::ObjectState AddLibrariesCommand::Execute (const GS::ObjectState& parameters,
     if (ACAPI_LibraryManagement_GetLibraries (&libs) != NoError) {
         return CreateFailedExecutionResult (APIERR_COMMANDFAILED, "Failed to read the libraries.");
     }
+    USize added = 0;
     for (const API_LibraryInfo& lib : LocalLibrariesFromParameters (parameters)) {
         bool present = false;
         for (const API_LibraryInfo& existing : libs) {
@@ -342,7 +343,12 @@ GS::ObjectState AddLibrariesCommand::Execute (const GS::ObjectState& parameters,
         }
         if (!present) {
             libs.Push (lib);
+            ++added;
         }
+    }
+    if (added == 0) {
+        // Every folder is already loaded: SetLibraries would only force a reload.
+        return CreateSuccessfulExecutionResult ();
     }
     return ApplyLibraries (libs);
 }

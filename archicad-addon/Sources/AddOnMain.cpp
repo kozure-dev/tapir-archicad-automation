@@ -185,7 +185,7 @@ GSErrCode Initialize (void)
         );
         err |= RegisterCommand<GetPointFromUserCommand> (
             applicationCommands, "1.5.9",
-            "Asks the designer to click a point in the current window and returns it; the call waits for the click and fails when the input is cancelled."
+            "Asks the designer to click a point in the current window and returns it. Archicad waits for the click or for Escape, and every other JSON command queues behind this one until then; the call fails when the input is cancelled."
         );
         err |= RegisterCommand<GetCurrentWindowTypeCommand> (
             applicationCommands, "1.0.7",

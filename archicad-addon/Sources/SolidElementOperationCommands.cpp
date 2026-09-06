@@ -468,7 +468,10 @@ GS::ObjectState TrimElementsCommand::Execute (const GS::ObjectState& parameters,
     GS::ObjectState trimmingOs;
     const bool withElement = parameters.Get ("trimmingElement", trimmingOs);
     GS::UniString trimTypeStr = "KeepInside";
-    parameters.Get ("trimType", trimTypeStr);
+    const bool withTrimType = parameters.Get ("trimType", trimTypeStr);
+    if (withTrimType && !withElement) {
+        return CreateFailedExecutionResult (APIERR_BADPARS, "trimType applies only with trimmingElement; without one the roofs and shells in the list trim with their own settings.");
+    }
     const API_TrimTypeID trimType = TrimTypeFromString (trimTypeStr);
 
     GSErrCode err = NoError;

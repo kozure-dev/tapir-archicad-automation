@@ -719,7 +719,7 @@ GS::Optional<GS::UniString> GetPointFromUserCommand::GetInputParametersSchema ()
         "properties": {
             "prompt": {
                 "type": "string",
-                "description": "Shown in the control box while Archicad waits for the click."
+                "description": "Shown in the control box while Archicad waits for the click. Single-byte text: the box takes a char field. Archicad's main thread waits for the click or for Escape, and every other JSON command queues behind this one until then."
             }
         },
         "additionalProperties": false,
