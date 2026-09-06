@@ -245,6 +245,18 @@ GSErrCode Initialize (void)
             projectCommands, "0.1.0",
             "Gets the file system locations (path) of the hotlink modules. The hotlinks can have tree hierarchy in the project."
         );
+        err |= RegisterCommand<CreateHotlinkNodesCommand> (
+            projectCommands, "1.5.9",
+            "Creates hotlink module nodes from source files. A node that already points at the same file is returned instead of duplicated (Archicad 26 and later; 25 cannot see an unplaced node)."
+        );
+        err |= RegisterCommand<CreateHotlinkInstancesCommand> (
+            projectCommands, "1.5.9",
+            "Places instances of hotlink module nodes at an origin, rotation and mirroring."
+        );
+        err |= RegisterCommand<ChangeHotlinkInstancesCommand> (
+            projectCommands, "1.5.9",
+            "Moves, rotates or mirrors placed hotlink instances by changing their transformation. MoveElements and RotateElements do not work on hotlink instances."
+        );
         err |= RegisterCommand<OpenProjectCommand> (
             projectCommands, "1.0.7",
             "Opens the given project."
@@ -424,7 +436,7 @@ GSErrCode Initialize (void)
         );
         err |= RegisterCommand<CreateAssociativeDimensionsOnSectionCommand> (
             elementCommands, "1.4.0",
-            "Creates associative linear dimensions on section elements using common wall, slab, beam, column and opening presets."
+            "Creates associative linear dimensions on section elements using common wall, slab, beam, column and opening presets. The preset points of multiple section elements can be merged into one continuous dimension chain via sectionElementIds."
         );
         err |= RegisterCommand<CreateWallThicknessDimensionsCommand> (
             elementCommands, "1.4.0",
