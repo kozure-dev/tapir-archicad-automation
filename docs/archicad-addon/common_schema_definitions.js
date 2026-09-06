@@ -37,6 +37,48 @@ var gSchemaDefinitions = {
             "$ref": "#/ElementIdOrError"
         }
     },
+    "ElementTrims": {
+        "type": "object",
+        "description": "The trims of one element: the roofs and shells trimming it, and the elements it trims.",
+        "properties": {
+            "trimmedBy": {
+                "type": "array",
+                "description": "The roofs and shells trimming this element, with the trim type.",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "elementId": {
+                            "$ref": "#/ElementId"
+                        },
+                        "trimType": {
+                            "type": "string",
+                            "enum": [ "KeepInside", "KeepOutside", "KeepAll", "No" ]
+                        }
+                    },
+                    "additionalProperties": false,
+                    "required": [ "elementId", "trimType" ]
+                }
+            },
+            "trims": {
+                "$ref": "#/Elements",
+                "description": "The elements this roof or shell trims."
+            }
+        },
+        "additionalProperties": false,
+        "required": [ "trimmedBy", "trims" ]
+    },
+    "ElementTrimsOrError": {
+        "type": "object",
+        "description": "The trims of one element, or an error.",
+        "oneOf": [
+            {
+                "$ref": "#/ElementTrims"
+            },
+            {
+                "$ref": "#/ErrorItem"
+            }
+        ]
+    },
     "MEPRoutingSegmentDetails": {
         "type": "object",
         "description": "The details of an MEP routing segment.",

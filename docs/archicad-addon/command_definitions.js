@@ -11009,40 +11009,7 @@ var gCommands = [{
                 "type": "array",
                 "description": "One item per queried element, in order. An unknown or deleted element is an error item, so it cannot be mistaken for an element that is simply not trimmed.",
                 "items": {
-                    "oneOf": [
-                        {
-                    "type": "object",
-                    "properties": {
-                        "trimmedBy": {
-                            "type": "array",
-                            "description": "The roofs and shells trimming this element, with the trim type.",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "elementId": {
-                                        "$ref": "#/ElementId"
-                                    },
-                                    "trimType": {
-                                        "type": "string",
-                                        "enum": [ "KeepInside", "KeepOutside", "KeepAll", "No" ]
-                                    }
-                                },
-                                "additionalProperties": false,
-                                "required": [ "elementId", "trimType" ]
-                            }
-                        },
-                        "trims": {
-                            "$ref": "#/Elements",
-                            "description": "The elements this roof or shell trims."
-                        }
-                    },
-                    "additionalProperties": false,
-                    "required": [ "trimmedBy", "trims" ]
-                        },
-                        {
-                            "$ref": "#/ErrorItem"
-                        }
-                    ]
+                    "$ref": "#/ElementTrimsOrError"
                 }
             }
         },

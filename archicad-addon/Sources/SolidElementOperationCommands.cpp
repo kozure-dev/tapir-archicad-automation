@@ -476,12 +476,16 @@ GS::ObjectState TrimElementsCommand::Execute (const GS::ObjectState& parameters,
     const API_TrimTypeID trimType = TrimTypeFromString (trimTypeStr);
 
     GSErrCode err = NoError;
-    ACAPI_CallUndoableCommand ("TrimElements", [&] () -> GSErrCode {
+    const GSErrCode undoErr = ACAPI_CallUndoableCommand ("TrimElements", [&] () -> GSErrCode {
         err = withElement
             ? ACAPI_Element_Trim_ElementsWith (guids, GetGuidFromObjectState (trimmingOs), trimType)
             : ACAPI_Element_Trim_Elements (guids);
         return err;
     });
+    if (err == NoError && undoErr != NoError) {
+        // The undo scope did not open (nested undoable command, teamwork state): the lambda never ran.
+        err = undoErr;
+    }
     if (err != NoError) {
         return CreateFailedExecutionResult (err, "Failed to trim the elements: every element must be a construction element and at least one roof or shell must take part.");
     }
@@ -553,7 +557,7 @@ GS::ObjectState RemoveElementTrimsCommand::Execute (const GS::ObjectState& param
     parameters.Get ("elementPairs", pairs);
     GS::ObjectState response;
     const auto& executionResults = response.AddList<GS::ObjectState> ("executionResults");
-    ACAPI_CallUndoableCommand ("RemoveElementTrims", [&] () -> GSErrCode {
+    const GSErrCode undoErr = ACAPI_CallUndoableCommand ("RemoveElementTrims", [&] () -> GSErrCode {
         for (const GS::ObjectState& pair : pairs) {
             GS::ObjectState elementOs, trimmingOs;
             if (!pair.Get ("elementId", elementOs) || !pair.Get ("trimmingElementId", trimmingOs)) {
@@ -569,6 +573,13 @@ GS::ObjectState RemoveElementTrimsCommand::Execute (const GS::ObjectState& param
         }
         return NoError;
     });
+    if (undoErr != NoError) {
+        // The undo scope did not open, so no pair was tried: say so once per pair,
+        // keeping one result per input as the schema promises.
+        for (USize i = 0; i < pairs.GetSize (); ++i) {
+            executionResults (CreateFailedExecutionResult (undoErr, "Failed to open an undoable command; no trim was removed."));
+        }
+    }
     return response;
 }
 
@@ -607,40 +618,7 @@ GS::Optional<GS::UniString> GetElementTrimsCommand::GetRawResponseSchema () cons
                 "type": "array",
                 "description": "One item per queried element, in order. An unknown or deleted element is an error item, so it cannot be mistaken for an element that is simply not trimmed.",
                 "items": {
-                    "oneOf": [
-                        {
-                    "type": "object",
-                    "properties": {
-                        "trimmedBy": {
-                            "type": "array",
-                            "description": "The roofs and shells trimming this element, with the trim type.",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "elementId": {
-                                        "$ref": "#/ElementId"
-                                    },
-                                    "trimType": {
-                                        "type": "string",
-                                        "enum": [ "KeepInside", "KeepOutside", "KeepAll", "No" ]
-                                    }
-                                },
-                                "additionalProperties": false,
-                                "required": [ "elementId", "trimType" ]
-                            }
-                        },
-                        "trims": {
-                            "$ref": "#/Elements",
-                            "description": "The elements this roof or shell trims."
-                        }
-                    },
-                    "additionalProperties": false,
-                    "required": [ "trimmedBy", "trims" ]
-                        },
-                        {
-                            "$ref": "#/ErrorItem"
-                        }
-                    ]
+                    "$ref": "#/ElementTrimsOrError"
                 }
             }
         },
