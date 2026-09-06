@@ -408,16 +408,12 @@ static GS::UniString TrimTypeToString (API_TrimTypeID trimType)
 
 static GS::Array<API_Guid> GuidsFromElements (const GS::ObjectState& parameters)
 {
+    // One guid per input item, in order (a missing elementId yields the null
+    // guid and fails per item downstream), so GetElementTrims' promise of one
+    // result per queried element holds. Same helper the other commands use.
     GS::Array<GS::ObjectState> elements;
     parameters.Get ("elements", elements);
-    GS::Array<API_Guid> guids;
-    for (const GS::ObjectState& element : elements) {
-        const GS::ObjectState* elementId = element.Get ("elementId");
-        if (elementId != nullptr) {
-            guids.Push (GetGuidFromObjectState (*elementId));
-        }
-    }
-    return guids;
+    return elements.Transform<API_Guid> (GetGuidFromElementsArrayItem);
 }
 
 TrimElementsCommand::TrimElementsCommand () :

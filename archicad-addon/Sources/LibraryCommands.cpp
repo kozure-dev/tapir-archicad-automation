@@ -236,7 +236,7 @@ static GS::Array<API_LibraryInfo> LocalLibrariesFromParameters (const GS::Object
         if (!item.Get ("path", path) || path.IsEmpty ()) {
             continue;
         }
-        API_LibraryInfo info;
+        API_LibraryInfo info = {};
         info.location = IO::Location (path);
         info.libraryType = API_LibraryTypeID::API_LocalLibrary;
         IO::Name name;
