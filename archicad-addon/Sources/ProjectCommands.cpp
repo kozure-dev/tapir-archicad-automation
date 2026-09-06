@@ -1141,7 +1141,7 @@ GS::ObjectState SaveAsModuleFileCommand::Execute (const GS::ObjectState& paramet
     IO::Location location (moduleFilePath);
 
     GS::Array<GS::ObjectState> elements;
-    parameters.Get ("elements", elements);
+    const bool listGiven = parameters.Get ("elements", elements);
     GS::Array<API_Elem_Head> heads;
     for (const GS::ObjectState& element : elements) {
         const GS::ObjectState* elementId = element.Get ("elementId");
@@ -1151,6 +1151,10 @@ GS::ObjectState SaveAsModuleFileCommand::Execute (const GS::ObjectState& paramet
         API_Elem_Head head = {};
         head.guid = GetGuidFromObjectState (*elementId);
         heads.Push (head);
+    }
+    if (listGiven && heads.IsEmpty ()) {
+        // A given-but-empty list must not fall back to whatever is selected.
+        return CreateFailedExecutionResult (APIERR_BADPARS, "elements was given but holds no item with an elementId; omit the parameter to export the current selection.");
     }
 
 #ifndef ServerMainVers_2700

@@ -250,7 +250,10 @@ static GS::Array<API_LibraryInfo> LocalLibrariesFromParameters (const GS::Object
 
 static bool SameLocation (const IO::Location& a, const IO::Location& b)
 {
-    return a.ToDisplayText ().Compare (b.ToDisplayText (), CaseInsensitive) == GS::UniString::Equal;
+    // IO::Location's own equality (InputOutput/Location.hpp, present in every
+    // kit): it knows the platform's rules for separators and case, where a
+    // display-text comparison guessed.
+    return a == b;
 }
 
 static GS::ObjectState ApplyLibraries (const GS::Array<API_LibraryInfo>& libs)
