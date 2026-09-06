@@ -263,7 +263,7 @@ static GS::ObjectState ApplyLibraries (const GS::Array<API_LibraryInfo>& libs)
 }
 
 SetLibrariesCommand::SetLibrariesCommand () :
-    CommandBase (CommonSchema::NotUsed)
+    CommandBase (CommonSchema::Used)
 {
 }
 
@@ -305,7 +305,7 @@ GS::ObjectState SetLibrariesCommand::Execute (const GS::ObjectState& parameters,
 }
 
 AddLibrariesCommand::AddLibrariesCommand () :
-    CommandBase (CommonSchema::NotUsed)
+    CommandBase (CommonSchema::Used)
 {
 }
 
