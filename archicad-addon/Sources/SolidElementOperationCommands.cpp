@@ -408,9 +408,10 @@ static GS::UniString TrimTypeToString (API_TrimTypeID trimType)
 
 static GS::Array<API_Guid> GuidsFromElements (const GS::ObjectState& parameters)
 {
-    // One guid per input item, in order (a missing elementId yields the null
-    // guid and fails per item downstream), so GetElementTrims' promise of one
-    // result per queried element holds. Same helper the other commands use.
+    // One guid per input item, in order, so GetElementTrims' promise of one
+    // result per queried element holds: a missing or unknown elementId comes
+    // back as that item's error there, and fails the whole call in
+    // TrimElements as the API does. Same helper the other commands use.
     GS::Array<GS::ObjectState> elements;
     parameters.Get ("elements", elements);
     return elements.Transform<API_Guid> (GetGuidFromElementsArrayItem);
@@ -604,8 +605,10 @@ GS::Optional<GS::UniString> GetElementTrimsCommand::GetRawResponseSchema () cons
         "properties": {
             "elementTrims": {
                 "type": "array",
-                "description": "One item per queried element, in order.",
+                "description": "One item per queried element, in order. An unknown or deleted element is an error item, so it cannot be mistaken for an element that is simply not trimmed.",
                 "items": {
+                    "oneOf": [
+                        {
                     "type": "object",
                     "properties": {
                         "trimmedBy": {
@@ -633,6 +636,11 @@ GS::Optional<GS::UniString> GetElementTrimsCommand::GetRawResponseSchema () cons
                     },
                     "additionalProperties": false,
                     "required": [ "trimmedBy", "trims" ]
+                        },
+                        {
+                            "$ref": "#/ErrorItem"
+                        }
+                    ]
                 }
             }
         },
@@ -649,25 +657,43 @@ GS::ObjectState GetElementTrimsCommand::Execute (const GS::ObjectState& paramete
     GS::ObjectState response;
     const auto& items = response.AddList<GS::ObjectState> ("elementTrims");
     for (const API_Guid& guid : guids) {
+        // A read that fails is reported as an error item, never as "not
+        // trimmed": an unknown or deleted guid must stay distinguishable from
+        // an element with no trims.
+        GS::Array<API_Guid> trimming;
+        GSErrCode err = ACAPI_Element_Trim_GetTrimmingElements (guid, &trimming);
+        if (err != NoError) {
+            items (CreateErrorResponse (err, "Failed to read the trimming elements of the element."));
+            continue;
+        }
         GS::ObjectState item;
         const auto& trimmedBy = item.AddList<GS::ObjectState> ("trimmedBy");
-        GS::Array<API_Guid> trimming;
-        if (ACAPI_Element_Trim_GetTrimmingElements (guid, &trimming) == NoError) {
-            for (const API_Guid& t : trimming) {
-                API_TrimTypeID trimType = APITrim_No;
-                ACAPI_Element_Trim_GetTrimType (guid, t, &trimType);
-                GS::ObjectState entry;
-                entry.Add ("elementId", CreateGuidObjectState (t));
-                entry.Add ("trimType", TrimTypeToString (trimType));
-                trimmedBy (entry);
+        bool failed = false;
+        for (const API_Guid& t : trimming) {
+            API_TrimTypeID trimType = APITrim_No;
+            err = ACAPI_Element_Trim_GetTrimType (guid, t, &trimType);
+            if (err != NoError) {
+                failed = true;
+                break;
             }
+            GS::ObjectState entry;
+            entry.Add ("elementId", CreateGuidObjectState (t));
+            entry.Add ("trimType", TrimTypeToString (trimType));
+            trimmedBy (entry);
+        }
+        if (failed) {
+            items (CreateErrorResponse (err, "Failed to read the trim type of the element."));
+            continue;
         }
         const auto& trims = item.AddList<GS::ObjectState> ("trims");
         GS::Array<API_Guid> trimmed;
-        if (ACAPI_Element_Trim_GetTrimmedElements (guid, &trimmed) == NoError) {
-            for (const API_Guid& t : trimmed) {
-                trims (CreateElementIdObjectState (t));
-            }
+        err = ACAPI_Element_Trim_GetTrimmedElements (guid, &trimmed);
+        if (err != NoError) {
+            items (CreateErrorResponse (err, "Failed to read the elements this element trims."));
+            continue;
+        }
+        for (const API_Guid& t : trimmed) {
+            trims (CreateElementIdObjectState (t));
         }
         items (item);
     }

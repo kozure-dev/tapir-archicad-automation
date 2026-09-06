@@ -11007,8 +11007,10 @@ var gCommands = [{
         "properties": {
             "elementTrims": {
                 "type": "array",
-                "description": "One item per queried element, in order.",
+                "description": "One item per queried element, in order. An unknown or deleted element is an error item, so it cannot be mistaken for an element that is simply not trimmed.",
                 "items": {
+                    "oneOf": [
+                        {
                     "type": "object",
                     "properties": {
                         "trimmedBy": {
@@ -11036,6 +11038,11 @@ var gCommands = [{
                     },
                     "additionalProperties": false,
                     "required": [ "trimmedBy", "trims" ]
+                        },
+                        {
+                            "$ref": "#/ErrorItem"
+                        }
+                    ]
                 }
             }
         },
