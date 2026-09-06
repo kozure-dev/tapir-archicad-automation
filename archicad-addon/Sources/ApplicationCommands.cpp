@@ -753,8 +753,7 @@ GS::ObjectState GetPointFromUserCommand::Execute (const GS::ObjectState& paramet
     parameters.Get ("prompt", prompt);
 
     API_GetPointType pointInfo = {};
-    strncpy (pointInfo.prompt, prompt.ToCStr ().Get (), sizeof (pointInfo.prompt) - 1);
-    pointInfo.prompt[sizeof (pointInfo.prompt) - 1] = 0;
+    CHTruncate (prompt.ToCStr ().Get (), pointInfo.prompt, sizeof (pointInfo.prompt));
     pointInfo.enableQuickSelection = true;
 
     const GSErrCode err = ACAPI_UserInput_GetPoint (&pointInfo);
